@@ -9,7 +9,7 @@ COPY tsconfig.json ./
 COPY src ./src
 
 # Install dependencies and build
-RUN npm ci && npm run build
+RUN npm install && npm run build
 
 # Runtime stage
 FROM node:18-alpine
