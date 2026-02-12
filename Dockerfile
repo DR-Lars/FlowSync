@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /build
 
@@ -15,7 +15,7 @@ COPY src ./src
 RUN pnpm install --frozen-lockfile && pnpm run build
 
 # Runtime stage
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
