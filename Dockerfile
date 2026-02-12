@@ -3,13 +3,16 @@ FROM node:18-alpine AS builder
 
 WORKDIR /build
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Copy package files
-COPY package*.json ./
+COPY package*.json pnpm-lock.yaml* ./
 COPY tsconfig.json ./
 COPY src ./src
 
 # Install dependencies and build
-RUN npm install && npm run build
+RUN pnpm install --frozen-lockfile && pnpm run build
 
 # Runtime stage
 FROM node:18-alpine
