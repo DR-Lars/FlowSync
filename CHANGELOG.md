@@ -1,3 +1,10 @@
+## [0.2.1](https://github.com/DR-Lars/FlowSync/compare/v0.2.0...v0.2.1) (2026-02-12)
+
+
+### Bug Fixes
+
+* correct dumb-init path from /sbin to /usr/sbin on Alpine ([056bfc8](https://github.com/DR-Lars/FlowSync/commit/056bfc803fdb1a8967c1ffbb90cb9100aaecf9ee))
+
 # [0.2.0](https://github.com/DR-Lars/FlowSync/compare/v0.1.1...v0.2.0) (2026-02-12)
 
 
