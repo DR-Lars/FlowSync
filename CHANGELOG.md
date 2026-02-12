@@ -1,3 +1,10 @@
+## [0.2.2](https://github.com/DR-Lars/FlowSync/compare/v0.2.1...v0.2.2) (2026-02-12)
+
+
+### Bug Fixes
+
+* update build-and-push workflow to fetch latest release tag and adjust metadata extraction ([245cbb1](https://github.com/DR-Lars/FlowSync/commit/245cbb101da6b7b4da6aac67144f58364c184380))
+
 ## [0.2.1](https://github.com/DR-Lars/FlowSync/compare/v0.2.0...v0.2.1) (2026-02-12)
 
 
