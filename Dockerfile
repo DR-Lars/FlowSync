@@ -27,9 +27,6 @@ COPY --from=builder /build/package*.json ./
 # Create a non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
-# Copy .env.example for reference
-COPY .env.example ./
-
 # Set user
 USER nodejs
 
