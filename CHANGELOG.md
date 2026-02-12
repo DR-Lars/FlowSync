@@ -1,3 +1,12 @@
+# [0.2.0](https://github.com/DR-Lars/FlowSync/compare/v0.1.1...v0.2.0) (2026-02-12)
+
+
+### Features
+
+* add pnpm ([66fabec](https://github.com/DR-Lars/FlowSync/commit/66fabecf8ba11fc77d9fc14712bcf07888f2c3bd))
+* implement CI/CD with GitHub Actions and semantic release ([b9a129a](https://github.com/DR-Lars/FlowSync/commit/b9a129a5f03f03f40a315aa780d5f7f9020b90e5))
+* upgrade Node.js version to 20 in CI/CD workflow and Dockerfile ([26c39a1](https://github.com/DR-Lars/FlowSync/commit/26c39a1cd2a8e1e6ab5b4aa70889bb35c9176f41))
+
 # Changelog
 
 All notable changes to FlowSync will be documented in this file.
