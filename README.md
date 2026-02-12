@@ -18,118 +18,48 @@ A lightweight Fastify + TypeScript service for Raspberry Pi/Windows that:
 
 ### Local Development
 
-1. Install Node.js (>= 18 recommended).
-2. Create `.env` from `.env.example` and fill values.
-3. Install deps and run:
+1. Install Node.js (>= 18 recommended) and pnpm
+2. Create `.env` from `.env.example` and fill values
+3. Install dependencies and run:
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 # or
-npm run build && npm start
+pnpm run build && pnpm start
 ```
 
-### Raspberry Pi Deployment
+### Docker Deployment (Recommended)
 
-#### Automated Deployment
+FlowSync supports multi-architecture Docker deployment for Raspberry Pi, x86, and cloud servers.
 
-The easiest way to deploy FlowSync to a Raspberry Pi is using the deployment script:
-
-1. Copy the project to your Raspberry Pi:
-
-   ```bash
-   # On your development machine
-   scp -r . pi@raspberrypi.local:~/flowsync-source
-   ```
-
-2. SSH into your Raspberry Pi:
-
-   ```bash
-   ssh pi@raspberrypi.local
-   ```
-
-3. Run the deployment script:
-
-   ```bash
-   cd ~/flowsync-source
-   chmod +x deploy.sh
-   ./deploy.sh
-   ```
-
-4. Configure your environment:
-
-   ```bash
-   nano ~/flowsync/.env
-   # Edit with your actual values
-   ```
-
-5. Start the service:
-   ```bash
-   sudo systemctl start flowsync
-   sudo systemctl status flowsync
-   ```
-
-The deployment script will:
-
-- Install Node.js 18 if not present
-- Install build dependencies
-- Copy files to `~/flowsync`
-- Install npm dependencies
-- Build the TypeScript project
-- Create and enable a systemd service for auto-start on boot
-
-#### Manual Deployment
-
-If you prefer manual deployment:
-
-1. Install Node.js on Raspberry Pi:
-
-   ```bash
-   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-   sudo apt-get install -y nodejs build-essential
-   ```
-
-2. Copy project files to Raspberry Pi (excluding node_modules and dist)
-
-3. Build the project:
-
-   ```bash
-   cd ~/flowsync
-   npm install
-   npm run build
-   ```
-
-4. Create `.env` from `.env.example` and configure
-
-5. Set up systemd service:
-   ```bash
-   sudo cp flowsync.service /etc/systemd/system/
-   sudo systemctl daemon-reload
-   sudo systemctl enable flowsync
-   sudo systemctl start flowsync
-   ```
-
-#### Service Management
+**Quick Start:**
 
 ```bash
-# Start service
-sudo systemctl start flowsync
+# Clone and configure
+git clone https://github.com/DR-Lars/FlowSync.git
+cd FlowSync
+cp .env.example .env
+nano .env  # Edit configuration
 
-# Stop service
-sudo systemctl stop flowsync
+# Deploy with Docker Compose
+docker-compose up -d
 
-# Restart service
-sudo systemctl restart flowsync
-
-# Check status
-sudo systemctl status flowsync
-
-# View logs (live)
-sudo journalctl -u flowsync -f
-
-# View recent logs
-sudo journalctl -u flowsync -n 100
+# View logs
+docker-compose logs -f
 ```
+
+**Features:**
+- Runs on x86, ARM64, and ARM32 (Raspberry Pi Zero/1/2/3/4/5)
+- Automatic health checks
+- Easy scaling
+- Log rotation
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed Docker deployment guide.
+
+### Manual Deployment
+
+If you prefer not to use Docker, see [DEPLOYMENT.md](./DEPLOYMENT.md) for manual setup instructions.
 
 ## Environment
 
@@ -159,6 +89,12 @@ FlowSync includes a built-in web interface for editing configuration:
 ## Modbus (future)
 
 - For Modbus RTU/TCP, add `modbus-serial` and wire a reader in `src/poller.ts` before normalization.
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+This project uses **Conventional Commits** and **automatic semantic versioning**. See [CONTRIBUTING.md](./CONTRIBUTING.md) for commit format guidelines that enable automatic version bumping and release generation.
 
 ## Notes
 

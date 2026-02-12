@@ -1,26 +1,28 @@
 {
   "name": "flowsync",
   "version": "0.1.0",
-  "private": true,
   "description": "Fastify service to poll local APIs/Modbus and send to cloud",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && pnpm run copy-assets",
     "copy-assets": "node -e \"require('fs').copyFileSync('src/config-editor.html', 'dist/config-editor.html')\"",
     "start": "node dist/index.js",
-    "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts"
+    "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
+    "semantic-release": "semantic-release"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "fastify": "^5.0.0",
     "node-cron": "^3.0.3",
     "pino": "^9.0.0",
-    "pnpm": "^10.29.3",
     "undici": "^6.19.8"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
     "nodemon": "^3.0.1",
+    "semantic-release": "^23.0.0",
+    "@semantic-release/changelog": "^6.0.0",
+    "@semantic-release/git": "^10.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   }

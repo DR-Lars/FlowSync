@@ -1,0 +1,34 @@
+{
+  "branches": [
+    "main"
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "package.json",
+          "CHANGELOG.md"
+        ],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "successComment": "This release is available on:\n- [GitHub Releases](https://github.com/${repoUrl}/releases/tag/${nextRelease.gitTag})\n- [Container Registry](https://ghcr.io/dr-lars/flowsync:${nextRelease.version})",
+        "releasedLabels": [
+          "type: release"
+        ]
+      }
+    ]
+  ]
+}
