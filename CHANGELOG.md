@@ -1,3 +1,10 @@
+## [0.2.3](https://github.com/DR-Lars/FlowSync/compare/v0.2.2...v0.2.3) (2026-02-12)
+
+
+### Bug Fixes
+
+* correct path for dumb-init in Dockerfile ENTRYPOINT ([296a5cd](https://github.com/DR-Lars/FlowSync/commit/296a5cdc0dadc2ad7d6f1f984c0254deb82db0eb))
+
 ## [0.2.2](https://github.com/DR-Lars/FlowSync/compare/v0.2.1...v0.2.2) (2026-02-12)
 
 
