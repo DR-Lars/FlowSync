@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   flowsync:
     image: ghcr.io/${REGISTRY_OWNER}/flowsync:latest
