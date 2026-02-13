@@ -4,7 +4,22 @@ import { Poller } from "./poller";
 import * as fs from "fs";
 import * as path from "path";
 
-const fastify = Fastify({ logger: true });
+const fastify = Fastify({ 
+  logger: true,
+  bodyLimit: 1048576, // 1MB
+});
+
+// Register JSON parser
+fastify.addContentTypeParser('application/json', { parseAs: 'string' }, function (req, body, done) {
+  try {
+    const json = JSON.parse(body as string);
+    done(null, json);
+  } catch (err: any) {
+    err.statusCode = 400;
+    done(err, undefined);
+  }
+});
+
 const envFilePath = process.env.ENV_FILE_PATH?.trim() || path.join(process.cwd(), ".env");
 const meters = getMeters();
 const pollers = meters.map((meter) => ({
@@ -104,13 +119,6 @@ fastify.post("/api/config", async (request, reply) => {
     
     if (!fs.existsSync(envDir)) {
       fs.mkdirSync(envDir, { recursive: true });
-    }
-    
-    // Check write permissions
-    try {
-      fs.accessSync(envPath, fs.constants.W_OK);
-    } catch (err) {
-      throw new Error(`No write permission for ${envPath}: ${err}`);
     }
 
     // Build new .env content
