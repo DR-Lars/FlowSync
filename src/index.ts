@@ -5,6 +5,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 const fastify = Fastify({ logger: true });
+const envFilePath = process.env.ENV_FILE_PATH?.trim() || path.join(process.cwd(), ".env");
 const meters = getMeters();
 const pollers = meters.map((meter) => ({
   meter,
@@ -58,7 +59,10 @@ fastify.get("/api/config", async (request, reply) => {
   if (!checkAuth(request, reply)) return;
 
   try {
-    const envPath = path.join(process.cwd(), ".env");
+    const envPath = envFilePath;
+    if (!fs.existsSync(envPath)) {
+      return {};
+    }
     const envContent = fs.readFileSync(envPath, "utf-8");
     const envVars: Record<string, string> = {};
 
@@ -93,7 +97,11 @@ fastify.post("/api/config", async (request, reply) => {
 
   try {
     const newConfig = request.body as Record<string, string>;
-    const envPath = path.join(process.cwd(), ".env");
+    const envPath = envFilePath;
+    const envDir = path.dirname(envPath);
+    if (!fs.existsSync(envDir)) {
+      fs.mkdirSync(envDir, { recursive: true });
+    }
 
     // Build new .env content
     const lines: string[] = [

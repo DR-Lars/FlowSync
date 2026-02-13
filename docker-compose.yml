@@ -42,6 +42,9 @@ services:
       - RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS:-10}
       - TIMEOUT_SECONDS_LOCAL=${TIMEOUT_SECONDS_LOCAL:-30}
       - TIMEOUT_SECONDS_REMOTE=${TIMEOUT_SECONDS_REMOTE:-300}
+
+    volumes:
+      - ./.env:/app/.env
     
     # Health check
     healthcheck:

@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 
-dotenv.config();
+const envFilePath = process.env.ENV_FILE_PATH?.trim();
+dotenv.config(envFilePath ? { path: envFilePath } : {});
 
 function required(name: string): string {
   const v = process.env[name]?.trim();
