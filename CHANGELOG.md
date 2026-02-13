@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/DR-Lars/FlowSync/compare/v0.2.3...v0.3.0) (2026-02-13)
+
+
+### Features
+
+* add support for custom .env file path and update Docker volumes ([8b31f13](https://github.com/DR-Lars/FlowSync/commit/8b31f13fb811e5747080486d22bb276ddca4c50b))
+
 ## [0.2.3](https://github.com/DR-Lars/FlowSync/compare/v0.2.2...v0.2.3) (2026-02-12)
 
 
