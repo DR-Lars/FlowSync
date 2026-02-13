@@ -75,13 +75,19 @@ fastify.get("/api/config", async (request, reply) => {
 
   try {
     const envPath = envFilePath;
+    fastify.log.info(`Reading config from: ${envPath}`);
+    
     if (!fs.existsSync(envPath)) {
+      fastify.log.warn(`Config file does not exist: ${envPath}`);
       return {};
     }
+    
     const envContent = fs.readFileSync(envPath, "utf-8");
+    fastify.log.info(`Read ${envContent.length} bytes from config file`);
+    
     const envVars: Record<string, string> = {};
 
-    envContent.split("\n").forEach((line) => {
+    envContent.split("\n").forEach((line, idx) => {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith("#")) return;
 
@@ -100,8 +106,10 @@ fastify.get("/api/config", async (request, reply) => {
       }
     });
 
+    fastify.log.info(`Parsed ${Object.keys(envVars).length} environment variables from config file`);
     return envVars;
   } catch (error: any) {
+    fastify.log.error(`Error reading config file: ${error.message}`);
     reply.code(500).send({ error: error.message });
   }
 });
