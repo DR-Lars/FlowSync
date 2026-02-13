@@ -1,3 +1,10 @@
+## [0.3.7](https://github.com/DR-Lars/FlowSync/compare/v0.3.6...v0.3.7) (2026-02-13)
+
+
+### Bug Fixes
+
+* extract run number from archive name and update batch tag key references ([0a42a8c](https://github.com/DR-Lars/FlowSync/commit/0a42a8c571b2462ebdf192c55bf7ee10faf30587))
+
 ## [0.3.6](https://github.com/DR-Lars/FlowSync/compare/v0.3.5...v0.3.6) (2026-02-13)
 
 
