@@ -1,3 +1,10 @@
+## [0.3.2](https://github.com/DR-Lars/FlowSync/compare/v0.3.1...v0.3.2) (2026-02-13)
+
+
+### Bug Fixes
+
+* use host network and writable volume for config editor ([68911f8](https://github.com/DR-Lars/FlowSync/commit/68911f8d86ef4edd75a35c733445abfd75e77589))
+
 ## [0.3.1](https://github.com/DR-Lars/FlowSync/compare/v0.3.0...v0.3.1) (2026-02-13)
 
 
