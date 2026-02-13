@@ -99,8 +99,18 @@ fastify.post("/api/config", async (request, reply) => {
     const newConfig = request.body as Record<string, string>;
     const envPath = envFilePath;
     const envDir = path.dirname(envPath);
+    
+    fastify.log.info(`Attempting to write config to: ${envPath}`);
+    
     if (!fs.existsSync(envDir)) {
       fs.mkdirSync(envDir, { recursive: true });
+    }
+    
+    // Check write permissions
+    try {
+      fs.accessSync(envPath, fs.constants.W_OK);
+    } catch (err) {
+      throw new Error(`No write permission for ${envPath}: ${err}`);
     }
 
     // Build new .env content
@@ -158,9 +168,11 @@ fastify.post("/api/config", async (request, reply) => {
     }
 
     fs.writeFileSync(envPath, lines.join("\n") + "\n", "utf-8");
+    fastify.log.info(`Configuration saved successfully to ${envPath}`);
 
     return { success: true, message: "Configuration saved successfully" };
   } catch (error: any) {
+    fastify.log.error(`Error saving config: ${error.message}`);
     reply.code(500).send({ error: error.message });
   }
 });

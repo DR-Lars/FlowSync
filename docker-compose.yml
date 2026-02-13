@@ -3,12 +3,11 @@ services:
     image: ghcr.io/${REGISTRY_OWNER}/flowsync:latest
     container_name: flowsync
     restart: unless-stopped
-    
-    ports:
-      - "${PORT:-3000}:3000"
+    network_mode: host
     
     environment:
       - NODE_ENV=production
+      - ENV_FILE_PATH=/app/env-data/.env
       # Global Configuration
       - SHIP_NAME=${SHIP_NAME}
       - REMOTE_API_URL=${REMOTE_API_URL}
@@ -44,7 +43,7 @@ services:
       - TIMEOUT_SECONDS_REMOTE=${TIMEOUT_SECONDS_REMOTE:-300}
 
     volumes:
-      - ./.env:/app/.env
+      - ./env-data:/app/env-data
     
     # Health check
     healthcheck:
