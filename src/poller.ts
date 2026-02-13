@@ -79,7 +79,7 @@ export class Poller {
 
   constructor(meter: MeterConfig) {
     this.meter = meter;
-    // Extract number from archive name (e.g., "BatchLogging2" -> "2", "BatchLogging" -> "1")
+    // Extract number from archive name (e.g., "BatchLogging2" -> "2", "BatchLogging1" -> "1")
     const match = meter.archiveName.match(/\d+$/);
     this.runNumber = match ? match[0] : "1";
   }
