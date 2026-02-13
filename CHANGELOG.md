@@ -1,3 +1,10 @@
+## [0.3.4](https://github.com/DR-Lars/FlowSync/compare/v0.3.3...v0.3.4) (2026-02-13)
+
+
+### Bug Fixes
+
+* create env-data directory with proper permissions before user switch ([aec8bb6](https://github.com/DR-Lars/FlowSync/commit/aec8bb6317a060b5d2070dd1827d8a8e4d52a5e4))
+
 ## [0.3.3](https://github.com/DR-Lars/FlowSync/compare/v0.3.2...v0.3.3) (2026-02-13)
 
 
