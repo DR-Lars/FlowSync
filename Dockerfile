@@ -30,6 +30,9 @@ COPY --from=builder /build/package*.json ./
 # Create a non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
+# Create .env file with proper permissions if it doesn't exist
+RUN touch /app/.env && chown nodejs:nodejs /app/.env && chmod 664 /app/.env
+
 # Set user
 USER nodejs
 
