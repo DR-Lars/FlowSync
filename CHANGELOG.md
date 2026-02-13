@@ -1,3 +1,10 @@
+## [0.3.6](https://github.com/DR-Lars/FlowSync/compare/v0.3.5...v0.3.6) (2026-02-13)
+
+
+### Bug Fixes
+
+* remove hardcoded env vars from compose, let app read from env-data/.env ([ef77e27](https://github.com/DR-Lars/FlowSync/commit/ef77e2734e5aa76d1ab633caf01ddc4eca84dc29))
+
 ## [0.3.5](https://github.com/DR-Lars/FlowSync/compare/v0.3.4...v0.3.5) (2026-02-13)
 
 
