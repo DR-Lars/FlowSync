@@ -3,44 +3,13 @@ services:
     image: ghcr.io/${REGISTRY_OWNER}/flowsync:latest
     container_name: flowsync
     restart: unless-stopped
-    network_mode: host
+    
+    ports:
+      - "${PORT:-3000}:3000"
     
     environment:
       - NODE_ENV=production
       - ENV_FILE_PATH=/app/env-data/.env
-      # Global Configuration
-      - SHIP_NAME=${SHIP_NAME}
-      - REMOTE_API_URL=${REMOTE_API_URL}
-      - REMOTE_API_URL_BATCH=${REMOTE_API_URL_BATCH}
-      - REMOTE_API_TOKEN=${REMOTE_API_TOKEN}
-      
-      # Meter 1 (Required)
-      - METER_1_ID=${METER_1_ID}
-      - METER_1_LOCAL_API_URL=${METER_1_LOCAL_API_URL}
-      - METER_1_ARCHIVE_NAME=${METER_1_ARCHIVE_NAME}
-      
-      # Meter 2 (Optional)
-      - METER_2_ID=${METER_2_ID:-}
-      - METER_2_LOCAL_API_URL=${METER_2_LOCAL_API_URL:-}
-      - METER_2_ARCHIVE_NAME=${METER_2_ARCHIVE_NAME:-}
-      
-      # Meter 3 (Optional)
-      - METER_3_ID=${METER_3_ID:-}
-      - METER_3_LOCAL_API_URL=${METER_3_LOCAL_API_URL:-}
-      - METER_3_ARCHIVE_NAME=${METER_3_ARCHIVE_NAME:-}
-      
-      # Admin Access
-      - ADMIN_USER=${ADMIN_USER:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
-      
-      # Optional Settings
-      - PORT=${PORT:-3000}
-      - POLL_INTERVAL_MS=${POLL_INTERVAL_MS:-900000}
-      - BATCH_SIZE=${BATCH_SIZE:-100}
-      - MAX_RETRIES=${MAX_RETRIES:-3}
-      - RETRY_DELAY_SECONDS=${RETRY_DELAY_SECONDS:-10}
-      - TIMEOUT_SECONDS_LOCAL=${TIMEOUT_SECONDS_LOCAL:-30}
-      - TIMEOUT_SECONDS_REMOTE=${TIMEOUT_SECONDS_REMOTE:-300}
 
     volumes:
       - ./env-data:/app/env-data
