@@ -1,3 +1,10 @@
+## [0.3.5](https://github.com/DR-Lars/FlowSync/compare/v0.3.4...v0.3.5) (2026-02-13)
+
+
+### Bug Fixes
+
+* add detailed logging to config GET endpoint to diagnose parsing issues ([4f9351c](https://github.com/DR-Lars/FlowSync/commit/4f9351c2fab30d231d159d25d3dca4290303c366))
+
 ## [0.3.4](https://github.com/DR-Lars/FlowSync/compare/v0.3.3...v0.3.4) (2026-02-13)
 
 
