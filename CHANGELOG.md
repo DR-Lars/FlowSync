@@ -1,3 +1,10 @@
+## [0.3.3](https://github.com/DR-Lars/FlowSync/compare/v0.3.2...v0.3.3) (2026-02-13)
+
+
+### Bug Fixes
+
+* add JSON parser and improve config editor error handling ([5e01cbf](https://github.com/DR-Lars/FlowSync/commit/5e01cbf9e6376934032409d9909a18b674e29545))
+
 ## [0.3.2](https://github.com/DR-Lars/FlowSync/compare/v0.3.1...v0.3.2) (2026-02-13)
 
 
