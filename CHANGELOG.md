@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/DR-Lars/FlowSync/compare/v0.3.0...v0.3.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* ensure .env file has correct permissions for web editor ([7778908](https://github.com/DR-Lars/FlowSync/commit/7778908dc0387340bba99011dbc86d1b7ef8953e))
+
 # [0.3.0](https://github.com/DR-Lars/FlowSync/compare/v0.2.3...v0.3.0) (2026-02-13)
 
 
