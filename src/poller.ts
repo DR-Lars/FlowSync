@@ -75,21 +75,35 @@ export class Poller {
     Authorization: `Bearer ${config.remoteApiToken}`,
   };
   private meter: MeterConfig;
+  private runNumber: string;
 
   constructor(meter: MeterConfig) {
     this.meter = meter;
+    // Extract number from archive name (e.g., "BatchLogging2" -> "2", "BatchLogging" -> "1")
+    const match = meter.archiveName.match(/\d+$/);
+    this.runNumber = match ? match[0] : "1";
+  }
+
+  private getBatchTagKey(): string {
+    return `LM_RUN${this.runNumber}!RUN${this.runNumber}_BATCH_NR_PRV`;
   }
 
   async runWithRetries(log: (msg: string) => void) {
     for (let attempt = 1; attempt <= config.maxRetries; attempt++) {
       try {
-        log(`INFO: [${this.meter.meterId}] Attempt ${attempt}/${config.maxRetries}`);
+        log(
+          `INFO: [${this.meter.meterId}] Attempt ${attempt}/${config.maxRetries}`,
+        );
         await this.runOnce(log);
         return;
       } catch (err: any) {
-        log(`ERROR: [${this.meter.meterId}] (attempt ${attempt}): ${err?.message ?? String(err)}`);
+        log(
+          `ERROR: [${this.meter.meterId}] (attempt ${attempt}): ${err?.message ?? String(err)}`,
+        );
         if (attempt < config.maxRetries) {
-          log(`INFO: [${this.meter.meterId}] Retrying in ${config.retryDelaySeconds} seconds...`);
+          log(
+            `INFO: [${this.meter.meterId}] Retrying in ${config.retryDelaySeconds} seconds...`,
+          );
           await delay(config.retryDelaySeconds * 1000);
         } else {
           log(`ERROR: [${this.meter.meterId}] Max retries exceeded`);
@@ -103,7 +117,9 @@ export class Poller {
     const LocalApiUrl = buildLocalSnapshotsUrl(this.meter);
     const batchSize = config.batchSize;
 
-    log(`INFO: [${this.meter.meterId}] Starting snapshot retrieval from ${LocalApiUrl}`);
+    log(
+      `INFO: [${this.meter.meterId}] Starting snapshot retrieval from ${LocalApiUrl}`,
+    );
 
     // Fetch first page to determine latest batch
     const firstPageUrl = `${LocalApiUrl}&count=${batchSize}`;
@@ -119,7 +135,7 @@ export class Poller {
     }
 
     const targetBatchRaw =
-      firstPage[0]?.snapshot?.tags?.["LM_RUN1!RUN1_BATCH_NR_PRV"]?.v;
+      firstPage[0]?.snapshot?.tags?.[this.getBatchTagKey()]?.v;
     const latestBatch = normalizeBatch(targetBatchRaw);
     const previousBatch = String(Number(latestBatch) - 1);
     log(
@@ -159,8 +175,7 @@ export class Poller {
       log(`INFO: Page ${pageCount} contains ${page.length} snapshots`);
 
       for (const snap of page) {
-        const currentBatch =
-          snap?.snapshot?.tags?.["LM_RUN1!RUN1_BATCH_NR_PRV"]?.v;
+        const currentBatch = snap?.snapshot?.tags?.[this.getBatchTagKey()]?.v;
         const currentBatchNormalized = normalizeBatch(currentBatch);
         if (Number(currentBatchNormalized) < Number(previousBatch)) {
           log(
@@ -202,7 +217,9 @@ export class Poller {
       // Check remote count
       const separator = config.remoteApiUrl.includes("?") ? "&" : "?";
       const checkUrl = `${config.remoteApiUrl}${separator}meter_id=${encodeURIComponent(this.meter.meterId)}&ship_name=${encodeURIComponent(config.shipName)}&batch_number=${encodeURIComponent(targetBatch)}`;
-      log(`INFO: [${this.meter.meterId}] Checking if batch ${targetBatch} already exists: ${checkUrl}`);
+      log(
+        `INFO: [${this.meter.meterId}] Checking if batch ${targetBatch} already exists: ${checkUrl}`,
+      );
 
       let shouldSkip = false;
       try {
