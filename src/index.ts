@@ -1,31 +1,39 @@
 import Fastify from "fastify";
 import { config, getMeters } from "./config";
 import { Poller } from "./poller";
+import { ReportPoller } from "./report-poller";
 import * as fs from "fs";
 import * as path from "path";
 
-const fastify = Fastify({ 
+const fastify = Fastify({
   logger: true,
   bodyLimit: 1048576, // 1MB
 });
 
 // Register JSON parser
-fastify.addContentTypeParser('application/json', { parseAs: 'string' }, function (req, body, done) {
-  try {
-    const json = JSON.parse(body as string);
-    done(null, json);
-  } catch (err: any) {
-    err.statusCode = 400;
-    done(err, undefined);
-  }
-});
+fastify.addContentTypeParser(
+  "application/json",
+  { parseAs: "string" },
+  function (req, body, done) {
+    try {
+      const json = JSON.parse(body as string);
+      done(null, json);
+    } catch (err: any) {
+      err.statusCode = 400;
+      done(err, undefined);
+    }
+  },
+);
 
-const envFilePath = process.env.ENV_FILE_PATH?.trim() || path.join(process.cwd(), ".env");
+const envFilePath =
+  process.env.ENV_FILE_PATH?.trim() || path.join(process.cwd(), ".env");
 const meters = getMeters();
 const pollers = meters.map((meter) => ({
   meter,
   poller: new Poller(meter),
+  reportPoller: new ReportPoller(meter),
   isPolling: false,
+  isReportPolling: false,
 }));
 
 function log(msg: string) {
@@ -36,7 +44,7 @@ function log(msg: string) {
 function checkAuth(request: any, reply: any): boolean {
   const authHeader = request.headers.authorization;
   const adminUser = process.env.ADMIN_USER || "admin";
-  const adminPass = process.env.ADMIN_PASSWORD || "changeme";
+  const adminPass = process.env.ADMIN_PASSWORD || "admin";
 
   if (!authHeader || !authHeader.startsWith("Basic ")) {
     reply
@@ -76,15 +84,15 @@ fastify.get("/api/config", async (request, reply) => {
   try {
     const envPath = envFilePath;
     fastify.log.info(`Reading config from: ${envPath}`);
-    
+
     if (!fs.existsSync(envPath)) {
       fastify.log.warn(`Config file does not exist: ${envPath}`);
       return {};
     }
-    
+
     const envContent = fs.readFileSync(envPath, "utf-8");
     fastify.log.info(`Read ${envContent.length} bytes from config file`);
-    
+
     const envVars: Record<string, string> = {};
 
     envContent.split("\n").forEach((line, idx) => {
@@ -106,7 +114,9 @@ fastify.get("/api/config", async (request, reply) => {
       }
     });
 
-    fastify.log.info(`Parsed ${Object.keys(envVars).length} environment variables from config file`);
+    fastify.log.info(
+      `Parsed ${Object.keys(envVars).length} environment variables from config file`,
+    );
     return envVars;
   } catch (error: any) {
     fastify.log.error(`Error reading config file: ${error.message}`);
@@ -122,9 +132,9 @@ fastify.post("/api/config", async (request, reply) => {
     const newConfig = request.body as Record<string, string>;
     const envPath = envFilePath;
     const envDir = path.dirname(envPath);
-    
+
     fastify.log.info(`Attempting to write config to: ${envPath}`);
-    
+
     if (!fs.existsSync(envDir)) {
       fs.mkdirSync(envDir, { recursive: true });
     }
@@ -174,6 +184,18 @@ fastify.post("/api/config", async (request, reply) => {
         lines.push(`${key}=${newConfig[key]}`);
       }
     });
+
+    // Report Poller Configuration (optional)
+    const reportVars = ["REPORT_TICKET_API_URL", "REPORT_FILTER"];
+    if (reportVars.some((key) => newConfig[key])) {
+      lines.push("");
+      lines.push("# Report Poller Configuration (optional)");
+      reportVars.forEach((key) => {
+        if (newConfig[key]) {
+          lines.push(`${key}=${newConfig[key]}`);
+        }
+      });
+    }
 
     // Preserve admin credentials if they exist
     if (process.env.ADMIN_USER) {
@@ -349,6 +371,49 @@ fastify.post("/api/test-config", async (request, reply) => {
       });
     }
 
+    if (testConfig.REPORT_TICKET_API_URL) {
+      try {
+        const cleanUrl = testConfig.REPORT_TICKET_API_URL.replace(/\/$/, "");
+        const response = await fetch(cleanUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${testConfig.REMOTE_API_TOKEN}`,
+          },
+          body: JSON.stringify({ test: true }),
+          signal: AbortSignal.timeout(5000),
+        }).catch(() => null);
+
+        if (response) {
+          if (response.ok) {
+            results.push({
+              name: "Report Ticket API",
+              status: "success",
+              message: "Connection and authentication successful",
+            });
+          } else if (response.status === 401 || response.status === 403) {
+            results.push({
+              name: "Report Ticket API",
+              status: "error",
+              message: "Authentication failed",
+            });
+          } else {
+            results.push({
+              name: "Report Ticket API",
+              status: "warning",
+              message: `Connection OK but got status ${response.status}`,
+            });
+          }
+        }
+      } catch (error: any) {
+        results.push({
+          name: "Report Ticket API",
+          status: "error",
+          message: `Connection failed: ${error.message}`,
+        });
+      }
+    }
+
     return { results };
   } catch (error: any) {
     reply.code(500).send({ error: error.message });
@@ -377,13 +442,13 @@ fastify.get("/health", async () => ({
 }));
 
 fastify.get("/trigger", async () => {
-  const anyPolling = pollers.some((p) => p.isPolling);
+  const anyPolling = pollers.some((p) => p.isPolling || p.isReportPolling);
   if (anyPolling) return { status: "busy" };
 
   try {
     // Run all pollers in parallel
-    await Promise.all(
-      pollers.map(async (p) => {
+    const tasks = [
+      ...pollers.map(async (p) => {
         p.isPolling = true;
         try {
           await p.poller.runWithRetries(log);
@@ -391,7 +456,23 @@ fastify.get("/trigger", async () => {
           p.isPolling = false;
         }
       }),
-    );
+    ];
+
+    // Run report pollers if configured
+    if (config.reportTicketApiUrl) {
+      tasks.push(
+        ...pollers.map(async (p) => {
+          p.isReportPolling = true;
+          try {
+            await p.reportPoller.runWithRetries(log);
+          } finally {
+            p.isReportPolling = false;
+          }
+        }),
+      );
+    }
+
+    await Promise.all(tasks);
     return { status: "done", meters: pollers.map((p) => p.meter.meterId) };
   } catch (e: any) {
     return { status: "error", error: e?.message ?? String(e) };
@@ -400,11 +481,11 @@ fastify.get("/trigger", async () => {
 
 async function schedulePoll() {
   // Run all pollers in parallel, skip if any is already polling
-  const anyPolling = pollers.some((p) => p.isPolling);
+  const anyPolling = pollers.some((p) => p.isPolling || p.isReportPolling);
   if (anyPolling) return;
 
-  await Promise.all(
-    pollers.map(async (p) => {
+  const tasks = [
+    ...pollers.map(async (p) => {
       p.isPolling = true;
       try {
         await p.poller.runWithRetries(log);
@@ -414,7 +495,25 @@ async function schedulePoll() {
         p.isPolling = false;
       }
     }),
-  );
+  ];
+
+  // Run report pollers if configured
+  if (config.reportTicketApiUrl) {
+    tasks.push(
+      ...pollers.map(async (p) => {
+        p.isReportPolling = true;
+        try {
+          await p.reportPoller.runWithRetries(log);
+        } catch (e: any) {
+          fastify.log.error(`[ReportPoller:${p.meter.meterId}]`, e);
+        } finally {
+          p.isReportPolling = false;
+        }
+      }),
+    );
+  }
+
+  await Promise.all(tasks);
 }
 
 async function start() {

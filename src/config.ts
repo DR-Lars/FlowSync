@@ -30,6 +30,9 @@ export const config = {
   retryDelaySeconds: Number(process.env.RETRY_DELAY_SECONDS ?? 10),
   timeoutSecondsLocal: Number(process.env.TIMEOUT_SECONDS_LOCAL ?? 30),
   timeoutSecondsRemote: Number(process.env.TIMEOUT_SECONDS_REMOTE ?? 300),
+  // Report Poller Configuration (optional)
+  reportTicketApiUrl: optional("REPORT_TICKET_API_URL") || "",
+  reportFilter: optional("REPORT_FILTER") || "*Mass*",
 };
 
 // Load meter configurations (up to 3 meters)

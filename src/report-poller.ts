@@ -1,0 +1,300 @@
+import { config, MeterConfig } from "./config";
+import { fetch } from "undici";
+import { parseStringPromise } from "xml2js";
+
+function delay(ms: number) {
+  return new Promise((res) => setTimeout(res, ms));
+}
+
+function withTimeout<T>(p: Promise<T>, seconds: number): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), seconds * 1000);
+  return p.finally(() => clearTimeout(timer));
+}
+
+type AnyObj = Record<string, any>;
+
+async function getJson(url: string, headers: AnyObj, timeoutSec: number) {
+  const res = await withTimeout(
+    fetch(url, {
+      method: "GET",
+      headers,
+      signal: new AbortController().signal,
+    }),
+    timeoutSec,
+  );
+  if (!res.ok) throw new Error(`GET ${url} -> ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+async function getText(url: string, headers: AnyObj, timeoutSec: number) {
+  const res = await withTimeout(
+    fetch(url, {
+      method: "GET",
+      headers,
+      signal: new AbortController().signal,
+    }),
+    timeoutSec,
+  );
+  if (!res.ok) throw new Error(`GET ${url} -> ${res.status} ${res.statusText}`);
+  return res.text();
+}
+
+async function postJson(
+  url: string,
+  headers: AnyObj,
+  body: any,
+  timeoutSec: number,
+) {
+  const res = await withTimeout(
+    fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    }),
+    timeoutSec,
+  );
+  if (!res.ok)
+    throw new Error(`POST ${url} -> ${res.status} ${res.statusText}`);
+  return res.json().catch(() => null);
+}
+
+interface ReportInfo {
+  time: string;
+  file: string;
+  mod: string;
+  text: string;
+}
+
+export class ReportPoller {
+  private localHeaders = { "Content-Type": "application/json" };
+  private remoteHeaders = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${config.remoteApiToken}`,
+  };
+  private meter: MeterConfig;
+
+  constructor(meter: MeterConfig) {
+    this.meter = meter;
+  }
+
+  async runWithRetries(log: (msg: string) => void) {
+    for (let attempt = 1; attempt <= config.maxRetries; attempt++) {
+      try {
+        log(
+          `INFO: [ReportPoller:${this.meter.meterId}] Attempt ${attempt}/${config.maxRetries}`,
+        );
+        await this.runOnce(log);
+        return;
+      } catch (err: any) {
+        log(
+          `ERROR: [ReportPoller:${this.meter.meterId}] (attempt ${attempt}): ${err?.message ?? String(err)}`,
+        );
+        if (attempt < config.maxRetries) {
+          log(
+            `INFO: [ReportPoller:${this.meter.meterId}] Retrying in ${config.retryDelaySeconds} seconds...`,
+          );
+          await delay(config.retryDelaySeconds * 1000);
+        } else {
+          log(
+            `ERROR: [ReportPoller:${this.meter.meterId}] Max retries exceeded`,
+          );
+          throw err;
+        }
+      }
+    }
+  }
+
+  async runOnce(log: (msg: string) => void) {
+    const baseUrl = this.meter.localApiUrlBase.replace(/\/$/, "");
+    const reportsUrl = `${baseUrl}/reports?filter=${encodeURIComponent(config.reportFilter)}`;
+    log(
+      `INFO: [ReportPoller:${this.meter.meterId}] Fetching reports from: ${reportsUrl}`,
+    );
+
+    const reportsXml = await getText(
+      reportsUrl,
+      this.localHeaders,
+      config.timeoutSecondsLocal,
+    );
+
+    const parsed = await parseStringPromise(reportsXml);
+    const reports = parsed.reports?.report || [];
+
+    if (!Array.isArray(reports)) {
+      throw new Error("Invalid reports format from local API");
+    }
+
+    log(
+      `INFO: [ReportPoller:${this.meter.meterId}] Found ${reports.length} reports with filter "${config.reportFilter}"`,
+    );
+
+    // Process reports in order (newest first)
+    for (const report of reports) {
+      const reportInfo: ReportInfo = {
+        time: report.$.time,
+        file: report.$.file,
+        mod: report.$.mod,
+        text: report.$.text,
+      };
+
+      await this.processReport(reportInfo, log);
+    }
+  }
+
+  private async processReport(report: ReportInfo, log: (msg: string) => void) {
+    try {
+      log(
+        `INFO: [ReportPoller:${this.meter.meterId}] Processing report: ${report.file}`,
+      );
+
+      // Download the report
+      const baseUrl = this.meter.localApiUrlBase.replace(/\/$/, "");
+      const downloadUrl = `${baseUrl}/report?type=xmlstream&report=1:${encodeURIComponent(report.file)}`;
+      log(
+        `INFO: [ReportPoller:${this.meter.meterId}] Downloading report from: ${downloadUrl}`,
+      );
+
+      const reportContent = await getText(
+        downloadUrl,
+        this.localHeaders,
+        config.timeoutSecondsLocal,
+      );
+
+      // Parse the report XML to extract batch number
+      const parsed = await parseStringPromise(reportContent);
+      const batchNumber = this.extractBatchNumber(parsed, log);
+
+      if (!batchNumber) {
+        log(
+          `WARNING: [ReportPoller:${this.meter.meterId}] Could not extract batch number from report: ${report.file}`,
+        );
+        return;
+      }
+
+      log(
+        `INFO: [ReportPoller:${this.meter.meterId}] Extracted batch number ${batchNumber} from report: ${report.file}`,
+      );
+
+      // Check if batch exists in remote API
+      const separator = config.remoteApiUrl.includes("?") ? "&" : "?";
+      const checkUrl = `${config.remoteApiUrl}${separator}meter_id=${encodeURIComponent(this.meter.meterId)}&ship_name=${encodeURIComponent(config.shipName)}&batch_number=${encodeURIComponent(batchNumber)}`;
+      log(
+        `INFO: [ReportPoller:${this.meter.meterId}] Checking if batch ${batchNumber} exists in remote API`,
+      );
+
+      let batchExists = false;
+      try {
+        const batchData: any = await getJson(
+          checkUrl,
+          this.remoteHeaders,
+          config.timeoutSecondsRemote,
+        );
+
+        if (
+          batchData &&
+          (Array.isArray(batchData)
+            ? batchData.length > 0
+            : batchData.data?.length > 0)
+        ) {
+          batchExists = true;
+          log(
+            `INFO: [ReportPoller:${this.meter.meterId}] Batch ${batchNumber} exists in remote API`,
+          );
+        } else {
+          log(
+            `INFO: [ReportPoller:${this.meter.meterId}] Batch ${batchNumber} not found in remote API, skipping report`,
+          );
+        }
+      } catch (err: any) {
+        const msg = err?.message ?? String(err);
+        if (/404/.test(msg)) {
+          log(
+            `INFO: [ReportPoller:${this.meter.meterId}] Batch ${batchNumber} not found (404), skipping report`,
+          );
+        } else {
+          log(
+            `WARNING: [ReportPoller:${this.meter.meterId}] Error checking batch: ${msg}. Skipping report.`,
+          );
+        }
+      }
+
+      if (!batchExists) {
+        return;
+      }
+
+      // Post the report to the remote ticket API
+      const payload = {
+        ship_name: config.shipName,
+        meter_id: this.meter.meterId,
+        batch_number: batchNumber,
+        file: report.file,
+        time: report.time,
+        text: report.text,
+        content: reportContent,
+      };
+
+      log(
+        `INFO: [ReportPoller:${this.meter.meterId}] Posting report to ticket API: ${config.reportTicketApiUrl}`,
+      );
+
+      const response = await postJson(
+        config.reportTicketApiUrl,
+        this.remoteHeaders,
+        payload,
+        config.timeoutSecondsRemote,
+      );
+
+      log(
+        `SUCCESS: [ReportPoller:${this.meter.meterId}] Posted report ${report.file} to ticket API`,
+      );
+      if (response) {
+        try {
+          log(
+            `SUCCESS: [ReportPoller:${this.meter.meterId}] Response: ${JSON.stringify(response)}`,
+          );
+        } catch {}
+      }
+    } catch (err: any) {
+      log(
+        `ERROR: [ReportPoller:${this.meter.meterId}] Failed to process report ${report.file}: ${err?.message ?? String(err)}`,
+      );
+    }
+  }
+
+  private extractBatchNumber(
+    parsed: any,
+    log: (msg: string) => void,
+  ): string | null {
+    try {
+      // Try common paths where batch number might be stored
+      // Adjust these paths based on your actual report XML structure
+      const paths = [
+        () => parsed.report?.batch?.[0],
+        () => parsed.report?.batch_number?.[0],
+        () => parsed.report?.attributes?.batch?.[0],
+        () => parsed.root?.batch?.[0],
+        () => parsed.root?.batch_number?.[0],
+      ];
+
+      for (const pathFn of paths) {
+        try {
+          const value = pathFn();
+          if (value) {
+            return String(value).trim();
+          }
+        } catch {}
+      }
+
+      log(
+        `DEBUG: [ReportPoller:${this.meter.meterId}] Could not extract batch number from standard paths, parsed structure: ${JSON.stringify(parsed).substring(0, 200)}...`,
+      );
+      return null;
+    } catch (err: any) {
+      log(
+        `ERROR: [ReportPoller:${this.meter.meterId}] Error extracting batch number: ${err?.message ?? String(err)}`,
+      );
+      return null;
+    }
+  }
+}

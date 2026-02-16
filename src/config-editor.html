@@ -469,6 +469,39 @@
             </div>
           </div>
 
+          <div class="form-section">
+            <h2>Report Poller Configuration</h2>
+            <div class="form-group">
+              <label
+                >Report Ticket API URL
+                <span class="optional">(optional)</span></label
+              >
+              <input
+                type="text"
+                name="REPORT_TICKET_API_URL"
+                placeholder="http://flow.allmas-it.be/api/ticket"
+              />
+              <div class="help-text">
+                If configured, reports will be fetched from each meter's local
+                API and posted here
+              </div>
+            </div>
+            <div class="form-group">
+              <label
+                >Report Filter
+                <span class="optional">(optional, default: *Mass*)</span></label
+              >
+              <input
+                type="text"
+                name="REPORT_FILTER"
+                placeholder="*Mass*"
+              />
+              <div class="help-text">
+                Filter pattern for report names (e.g., *Mass*, *Flow*, etc.)
+              </div>
+            </div>
+          </div>
+
           <div class="button-group">
             <button type="button" class="btn-test" onclick="testConfig()">
               Test Configuration
