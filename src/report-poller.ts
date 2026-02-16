@@ -51,10 +51,23 @@ async function postFormData(
   headers: AnyObj,
   formData: any,
   timeoutSec: number,
+  meter?: string,
+  logFn?: (msg: string) => void,
 ) {
   // Remove Content-Type header so fetch sets the proper boundary
   const headersWithoutContentType = { ...headers };
   delete headersWithoutContentType["Content-Type"];
+
+  // Extract origin from URL for CSRF protection (e.g., https://flow.allmas-it.be)
+  try {
+    const urlObj = new URL(url);
+    headersWithoutContentType["Origin"] = `${urlObj.protocol}//${urlObj.host}`;
+    if (logFn && meter) {
+      logFn(
+        `DEBUG: [ReportPoller:${meter}] Adding Origin header: ${headersWithoutContentType["Origin"]}`,
+      );
+    }
+  } catch {}
 
   const res = await withTimeout(
     fetch(url, {
@@ -217,6 +230,8 @@ export class ReportPoller {
         this.remoteHeaders,
         formData,
         config.timeoutSecondsRemote,
+        this.meter.meterId,
+        log,
       );
 
       log(
