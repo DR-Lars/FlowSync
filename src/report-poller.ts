@@ -268,27 +268,75 @@ export class ReportPoller {
   ): string | null {
     try {
       // Try common paths where batch number might be stored
-      // Adjust these paths based on your actual report XML structure
       const paths = [
+        // Check attributes
+        () => parsed.report?.$?.batch,
+        () => parsed.report?.$?.batch_number,
+        // Check child elements
         () => parsed.report?.batch?.[0],
         () => parsed.report?.batch_number?.[0],
-        () => parsed.report?.attributes?.batch?.[0],
-        () => parsed.root?.batch?.[0],
-        () => parsed.root?.batch_number?.[0],
+        () => parsed.report?.batchnumber?.[0],
       ];
 
       for (const pathFn of paths) {
         try {
           const value = pathFn();
-          if (value) {
-            return String(value).trim();
+          if (value !== undefined && value !== null && value !== "") {
+            const strValue = String(value).trim();
+            if (strValue && strValue !== "[object Object]") {
+              return strValue;
+            }
           }
         } catch {}
       }
 
+      // Search in table cells for "Batch number" label
+      try {
+        const rows = parsed.report?.rows?.[0]?.row;
+        if (Array.isArray(rows)) {
+          for (const row of rows) {
+            const cells = Array.isArray(row.cell) ? row.cell : [row.cell];
+            for (let i = 0; i < cells.length - 1; i++) {
+              const cell = cells[i];
+              const nextCell = cells[i + 1];
+              
+              const cellText = cell?.$?.text || cell?._;
+              const nextCellText = nextCell?.$?.text || nextCell?._;
+              
+              if (
+                cellText &&
+                String(cellText).toLowerCase().includes("batch number")
+              ) {
+                if (nextCellText) {
+                  const batchValue = String(nextCellText).trim();
+                  if (batchValue && /^\d+$/.test(batchValue)) {
+                    log(`DEBUG: [ReportPoller:${this.meter.meterId}] Found batch number in table: ${batchValue}`);
+                    return batchValue;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (tableErr) {
+        log(`DEBUG: [ReportPoller:${this.meter.meterId}] Error searching table cells: ${tableErr}`);
+      }
+
       log(
-        `DEBUG: [ReportPoller:${this.meter.meterId}] Could not extract batch number from standard paths, parsed structure: ${JSON.stringify(parsed).substring(0, 200)}...`,
+        `DEBUG: [ReportPoller:${this.meter.meterId}] Could not extract batch number. Report structure keys: ${JSON.stringify(Object.keys(parsed))}`,
       );
+      if (parsed.report?.$) {
+        log(
+          `DEBUG: [ReportPoller:${this.meter.meterId}] Report attributes: ${JSON.stringify(parsed.report.$)}`,
+        );
+      }
+      if (parsed.report) {
+        const keys = Object.keys(parsed.report).slice(0, 10);
+        log(
+          `DEBUG: [ReportPoller:${this.meter.meterId}] Report top-level keys: ${JSON.stringify(keys)}`,
+        );
+      }
+
       return null;
     } catch (err: any) {
       log(
