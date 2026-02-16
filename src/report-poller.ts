@@ -14,19 +14,6 @@ function withTimeout<T>(p: Promise<T>, seconds: number): Promise<T> {
 
 type AnyObj = Record<string, any>;
 
-async function getJson(url: string, headers: AnyObj, timeoutSec: number) {
-  const res = await withTimeout(
-    fetch(url, {
-      method: "GET",
-      headers,
-      signal: new AbortController().signal,
-    }),
-    timeoutSec,
-  );
-  if (!res.ok) throw new Error(`GET ${url} -> ${res.status} ${res.statusText}`);
-  return res.json();
-}
-
 async function getText(url: string, headers: AnyObj, timeoutSec: number) {
   const res = await withTimeout(
     fetch(url, {
@@ -199,53 +186,6 @@ export class ReportPoller {
       log(
         `INFO: [ReportPoller:${this.meter.meterId}] Extracted batch number ${batchNumber} from report: ${report.file}`,
       );
-
-      // Check if batch exists in remote API
-      const separator = config.remoteApiUrl.includes("?") ? "&" : "?";
-      const checkUrl = `${config.remoteApiUrl}${separator}meter_id=${encodeURIComponent(this.meter.meterId)}&ship_name=${encodeURIComponent(config.shipName)}&batch_number=${encodeURIComponent(batchNumber)}`;
-      log(
-        `INFO: [ReportPoller:${this.meter.meterId}] Checking if batch ${batchNumber} exists in remote API`,
-      );
-
-      let batchExists = false;
-      try {
-        const batchData: any = await getJson(
-          checkUrl,
-          this.remoteHeaders,
-          config.timeoutSecondsRemote,
-        );
-
-        if (
-          batchData &&
-          (Array.isArray(batchData)
-            ? batchData.length > 0
-            : batchData.data?.length > 0)
-        ) {
-          batchExists = true;
-          log(
-            `INFO: [ReportPoller:${this.meter.meterId}] Batch ${batchNumber} exists in remote API`,
-          );
-        } else {
-          log(
-            `INFO: [ReportPoller:${this.meter.meterId}] Batch ${batchNumber} not found in remote API, skipping report`,
-          );
-        }
-      } catch (err: any) {
-        const msg = err?.message ?? String(err);
-        if (/404/.test(msg)) {
-          log(
-            `INFO: [ReportPoller:${this.meter.meterId}] Batch ${batchNumber} not found (404), skipping report`,
-          );
-        } else {
-          log(
-            `WARNING: [ReportPoller:${this.meter.meterId}] Error checking batch: ${msg}. Skipping report.`,
-          );
-        }
-      }
-
-      if (!batchExists) {
-        return;
-      }
 
       // Post the report to the remote ticket API as form-data
       const formData = new FormData();
