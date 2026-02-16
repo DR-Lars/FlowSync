@@ -1,3 +1,15 @@
+# [0.4.0](https://github.com/DR-Lars/FlowSync/compare/v0.3.7...v0.4.0) (2026-02-16)
+
+
+### Bug Fixes
+
+* update comment to clarify extraction of run number from archive name ([113fbb1](https://github.com/DR-Lars/FlowSync/commit/113fbb1a884e7a3b2b64a61b1491b32e04224f47))
+
+
+### Features
+
+* add report poller configuration and implement report polling functionality ([2dbef00](https://github.com/DR-Lars/FlowSync/commit/2dbef00fe9502314f14b6d94107a2aa8a8357e0b))
+
 ## [0.3.7](https://github.com/DR-Lars/FlowSync/compare/v0.3.6...v0.3.7) (2026-02-13)
 
 
