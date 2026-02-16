@@ -1,3 +1,10 @@
+## [0.4.2](https://github.com/DR-Lars/FlowSync/compare/v0.4.1...v0.4.2) (2026-02-16)
+
+
+### Bug Fixes
+
+* use form-data posting for reports in ReportPoller ([7b41d2c](https://github.com/DR-Lars/FlowSync/commit/7b41d2c64d77795ce92a98ee317ecfbc49cf37fa))
+
 ## [0.4.1](https://github.com/DR-Lars/FlowSync/compare/v0.4.0...v0.4.1) (2026-02-16)
 
 
