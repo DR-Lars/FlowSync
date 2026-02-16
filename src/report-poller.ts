@@ -1,5 +1,5 @@
 import { config, MeterConfig } from "./config";
-import { fetch } from "undici";
+import { fetch, FormData, File } from "undici";
 import { parseStringPromise } from "xml2js";
 
 function delay(ms: number) {
@@ -51,6 +51,29 @@ async function postJson(
       method: "POST",
       headers,
       body: JSON.stringify(body),
+    }),
+    timeoutSec,
+  );
+  if (!res.ok)
+    throw new Error(`POST ${url} -> ${res.status} ${res.statusText}`);
+  return res.json().catch(() => null);
+}
+
+async function postFormData(
+  url: string,
+  headers: AnyObj,
+  formData: any,
+  timeoutSec: number,
+) {
+  // Remove Content-Type header so fetch sets the proper boundary
+  const headersWithoutContentType = { ...headers };
+  delete headersWithoutContentType["Content-Type"];
+
+  const res = await withTimeout(
+    fetch(url, {
+      method: "POST",
+      headers: headersWithoutContentType,
+      body: formData,
     }),
     timeoutSec,
   );
@@ -119,10 +142,11 @@ export class ReportPoller {
     );
 
     const parsed = await parseStringPromise(reportsXml);
-    const reports = parsed.reports?.report || [];
+    let reports = parsed.reports?.report || [];
 
+    // xml2js returns a single object if there's only one report, ensure it's always an array
     if (!Array.isArray(reports)) {
-      throw new Error("Invalid reports format from local API");
+      reports = reports ? [reports] : [];
     }
 
     log(
@@ -223,25 +247,26 @@ export class ReportPoller {
         return;
       }
 
-      // Post the report to the remote ticket API
-      const payload = {
-        ship_name: config.shipName,
-        meter_id: this.meter.meterId,
-        batch_number: batchNumber,
-        file: report.file,
-        time: report.time,
-        text: report.text,
-        content: reportContent,
-      };
+      // Post the report to the remote ticket API as form-data
+      const formData = new FormData();
+      formData.append("ship", config.shipName);
+      formData.append("meter", this.meter.meterId);
+      formData.append("batchNumber", batchNumber);
+
+      // Append the report file
+      const fileBlob = new File([reportContent], report.file, {
+        type: "application/xml",
+      });
+      formData.append("file", fileBlob);
 
       log(
         `INFO: [ReportPoller:${this.meter.meterId}] Posting report to ticket API: ${config.reportTicketApiUrl}`,
       );
 
-      const response = await postJson(
+      const response = await postFormData(
         config.reportTicketApiUrl,
         this.remoteHeaders,
-        payload,
+        formData,
         config.timeoutSecondsRemote,
       );
 
@@ -299,10 +324,10 @@ export class ReportPoller {
             for (let i = 0; i < cells.length - 1; i++) {
               const cell = cells[i];
               const nextCell = cells[i + 1];
-              
+
               const cellText = cell?.$?.text || cell?._;
               const nextCellText = nextCell?.$?.text || nextCell?._;
-              
+
               if (
                 cellText &&
                 String(cellText).toLowerCase().includes("batch number")
@@ -310,7 +335,9 @@ export class ReportPoller {
                 if (nextCellText) {
                   const batchValue = String(nextCellText).trim();
                   if (batchValue && /^\d+$/.test(batchValue)) {
-                    log(`DEBUG: [ReportPoller:${this.meter.meterId}] Found batch number in table: ${batchValue}`);
+                    log(
+                      `DEBUG: [ReportPoller:${this.meter.meterId}] Found batch number in table: ${batchValue}`,
+                    );
                     return batchValue;
                   }
                 }
@@ -319,7 +346,9 @@ export class ReportPoller {
           }
         }
       } catch (tableErr) {
-        log(`DEBUG: [ReportPoller:${this.meter.meterId}] Error searching table cells: ${tableErr}`);
+        log(
+          `DEBUG: [ReportPoller:${this.meter.meterId}] Error searching table cells: ${tableErr}`,
+        );
       }
 
       log(
