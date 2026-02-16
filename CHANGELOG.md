@@ -1,3 +1,10 @@
+# [0.6.0](https://github.com/DR-Lars/FlowSync/compare/v0.5.0...v0.6.0) (2026-02-16)
+
+
+### Features
+
+* add Origin header for CSRF protection in postFormData and enhance logging ([2b44643](https://github.com/DR-Lars/FlowSync/commit/2b44643c5a2f8576fc9fec5d8963f21f9472a98e))
+
 # [0.5.0](https://github.com/DR-Lars/FlowSync/compare/v0.4.2...v0.5.0) (2026-02-16)
 
 
