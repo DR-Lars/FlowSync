@@ -1,3 +1,10 @@
+# [0.5.0](https://github.com/DR-Lars/FlowSync/compare/v0.4.2...v0.5.0) (2026-02-16)
+
+
+### Features
+
+* add debug logging for report posting in ReportPoller ([9de5db7](https://github.com/DR-Lars/FlowSync/commit/9de5db7862030ad539e7d55fe4c4d6ef7f93048c))
+
 ## [0.4.2](https://github.com/DR-Lars/FlowSync/compare/v0.4.1...v0.4.2) (2026-02-16)
 
 
