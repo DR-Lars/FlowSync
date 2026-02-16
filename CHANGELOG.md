@@ -1,3 +1,10 @@
+## [0.4.1](https://github.com/DR-Lars/FlowSync/compare/v0.4.0...v0.4.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* enhance batch number extraction logic in ReportPoller ([b706fa1](https://github.com/DR-Lars/FlowSync/commit/b706fa1b6bc45977cafd7a2f16107879813bb8ff))
+
 # [0.4.0](https://github.com/DR-Lars/FlowSync/compare/v0.3.7...v0.4.0) (2026-02-16)
 
 
