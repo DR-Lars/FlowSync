@@ -202,6 +202,15 @@ export class ReportPoller {
       log(
         `INFO: [ReportPoller:${this.meter.meterId}] Posting report to ticket API: ${config.reportTicketApiUrl}`,
       );
+      log(
+        `DEBUG: [ReportPoller:${this.meter.meterId}] Request URL: POST ${config.reportTicketApiUrl}`,
+      );
+      log(
+        `DEBUG: [ReportPoller:${this.meter.meterId}] Request Headers: ${JSON.stringify(this.remoteHeaders)}`,
+      );
+      log(
+        `DEBUG: [ReportPoller:${this.meter.meterId}] Form Fields: ship="${config.shipName}", meter="${this.meter.meterId}", batchNumber="${batchNumber}", file="${report.file}" (${reportContent.length} bytes, type: application/xml)`,
+      );
 
       const response = await postFormData(
         config.reportTicketApiUrl,
