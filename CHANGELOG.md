@@ -1,3 +1,10 @@
+# [0.7.0](https://github.com/DR-Lars/FlowSync/compare/v0.6.0...v0.7.0) (2026-02-18)
+
+
+### Features
+
+* update Docker setup to include env-data directory and permissions management ([2b9e11f](https://github.com/DR-Lars/FlowSync/commit/2b9e11fdfca38aa3a6fa254db11d91dcde084e51))
+
 # [0.6.0](https://github.com/DR-Lars/FlowSync/compare/v0.5.0...v0.6.0) (2026-02-16)
 
 
