@@ -3,6 +3,7 @@ services:
     image: ghcr.io/${REGISTRY_OWNER}/flowsync:latest
     container_name: flowsync
     restart: unless-stopped
+    user: "1001:1001"  # Run as nodejs user
     
     ports:
       - "${PORT:-3000}:3000"

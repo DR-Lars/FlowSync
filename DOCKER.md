@@ -57,16 +57,23 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 ```bash
 # Create directory
-mkdir -p ~/flowsync
+mkdir -p ~/flowsync/env-data
 cd ~/flowsync
 
 # Get files
-wget https://raw.githubusercontent.com/your-username/flowsync/main/docker-compose.yml
-wget https://raw.githubusercontent.com/your-username/flowsync/main/.env.example
-cp .env.example .env
+wget https://raw.githubusercontent.com/dr-lars/flowsync/main/docker-compose.yml
+wget https://raw.githubusercontent.com/dr-lars/flowsync/main/.env.example
+
+# Copy .env to the env-data directory
+cp .env.example env-data/.env
+
+# Set proper permissions for env-data directory
+# The container runs as user 1001:1001, so ensure it can write to the .env file
+chmod 777 env-data
+chmod 666 env-data/.env
 
 # Edit configuration
-nano .env
+nano env-data/.env
 ```
 
 ### 3. Start the Service
@@ -170,9 +177,20 @@ cat .env  # Check configuration
 Edit `.env` and change `PORT=3000` to another port
 
 ### Permission denied
+
+If you get "EACCES: permission denied" errors:
+
 ```bash
-sudo usermod -aG docker $USER
-newgrp docker
+# Ensure the env-data directory and .env file have correct permissions
+cd ~/flowsync
+chmod 777 env-data
+chmod 666 env-data/.env
+
+# If running on Linux, you may need to match the container's user (1001:1001)
+sudo chown -R 1001:1001 env-data
+
+# Restart the container
+docker-compose restart
 ```
 
 ## Advanced Topics
