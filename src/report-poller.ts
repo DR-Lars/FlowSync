@@ -239,8 +239,10 @@ export class ReportPoller {
       );
       if (response) {
         try {
+          // Log response summary without the full XML ticket content
+          const { ticket, ...responseSummary } = response;
           log(
-            `SUCCESS: [ReportPoller:${this.meter.meterId}] Response: ${JSON.stringify(response)}`,
+            `SUCCESS: [ReportPoller:${this.meter.meterId}] Response: ${JSON.stringify(responseSummary)}`,
           );
         } catch {}
       }
@@ -316,24 +318,7 @@ export class ReportPoller {
       }
 
       log(
-        `DEBUG: [ReportPoller:${this.meter.meterId}] Could not extract batch number. Report structure keys: ${JSON.stringify(Object.keys(parsed))}`,
-      );
-      if (parsed.report?.$) {
-        log(
-          `DEBUG: [ReportPoller:${this.meter.meterId}] Report attributes: ${JSON.stringify(parsed.report.$)}`,
-        );
-      }
-      if (parsed.report) {
-        const keys = Object.keys(parsed.report).slice(0, 10);
-        log(
-          `DEBUG: [ReportPoller:${this.meter.meterId}] Report top-level keys: ${JSON.stringify(keys)}`,
-        );
-      }
-
-      return null;
-    } catch (err: any) {
-      log(
-        `ERROR: [ReportPoller:${this.meter.meterId}] Error extracting batch number: ${err?.message ?? String(err)}`,
+        `DEBUG: [ReportPoller:${this.meter.meterId}] Could not extract batch number from report`,
       );
       return null;
     }
