@@ -1,3 +1,10 @@
+# [0.8.0](https://github.com/DR-Lars/FlowSync/compare/v0.7.0...v0.8.0) (2026-02-19)
+
+
+### Features
+
+* enhance logging in ReportPoller to summarize response and reduce verbosity ([4072b3e](https://github.com/DR-Lars/FlowSync/commit/4072b3eb0a01d9f02b2fa6a4811ede960cb7c73c))
+
 # [0.7.0](https://github.com/DR-Lars/FlowSync/compare/v0.6.0...v0.7.0) (2026-02-18)
 
 
