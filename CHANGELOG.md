@@ -1,3 +1,10 @@
+## [0.8.1](https://github.com/DR-Lars/FlowSync/compare/v0.8.0...v0.8.1) (2026-02-20)
+
+
+### Bug Fixes
+
+* update image reference in docker-compose.yml to use specific registry owner ([7a98309](https://github.com/DR-Lars/FlowSync/commit/7a9830964e327078de09c56f80008729877a7df9))
+
 # [0.8.0](https://github.com/DR-Lars/FlowSync/compare/v0.7.0...v0.8.0) (2026-02-19)
 
 
