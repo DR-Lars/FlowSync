@@ -1,6 +1,6 @@
 services:
   flowsync:
-    image: ghcr.io/${REGISTRY_OWNER}/flowsync:latest
+    image: ghcr.io/dr-lars/flowsync:latest
     container_name: flowsync
     restart: unless-stopped
     user: "1001:1001"  # Run as nodejs user
